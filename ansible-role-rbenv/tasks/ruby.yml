@@ -1,0 +1,53 @@
+---
+- name: Encaminhar_ruby.
+  synchronize: src={{ ruby_src }} dest={{ rbenv_users_home_path_prefix }}/{{ item.user }}/{{ ruby_path }}
+  with_items:
+    - "{{ rbenv_users }}"
+  # when: xcode_dl_path.stat.exists == False
+
+- name: Configurar_ruby.
+  command: ./configure --enable-shared chdir={{ rbenv_users_home_path_prefix }}/{{ item.user }}/{{ ruby_path }}/ruby-{{ ruby_version }}
+  with_items: "{{ rbenv_users }}"
+
+- name: Make_ruby.
+  command: /usr/bin/make chdir={{ rbenv_users_home_path_prefix }}/{{ item.user }}/{{ ruby_path }}/ruby-{{ ruby_version }}
+  with_items: "{{ rbenv_users }}"
+
+- name: Instalar_ruby.
+  command: /usr/bin/make install chdir={{ rbenv_users_home_path_prefix }}/{{ item.user }}/{{ ruby_path }}/ruby-{{ ruby_version }} creates=/usr/local/bin/ruby
+  with_items: "{{ rbenv_users }}"
+
+- name: Definir_PATH.
+  lineinfile: dest=~/.bashrc
+              regexp=''
+              insertafter=EOF
+              line='export PATH=$PATH:~/.rbenv/versions/2.3.0/bin'
+              backup=yes
+
+# - name: Adicionar_ruby_symlinks.
+#   file:
+#     src: "/usr/local/bin/{{ item }}"
+#     dest: "~/bin/{{ item }}"
+#     state: link
+#     #become: yes
+#     #become_method: sudo
+#   with_items:
+#     - ruby
+#     - erb
+#     - gem
+#     - irb
+#     - rake
+#     - rdoc
+
+# Install Bundler and configured gems.
+# - name: Install Bundler.
+#   gem: name=bundler state=present user_install=no
+#   when: ruby_install_bundler
+#
+# - name: Install configured gems.
+#   gem:
+#     name: "{{ item }}"
+#     state: present
+#   become: yes
+#   become_user: "{{ ruby_install_gems_user }}"
+#   with_items: "{{ ruby_install_gems }}"

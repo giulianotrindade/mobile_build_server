@@ -1,0 +1,6 @@
+- hosts: localhost
+  roles:
+     - ansible-role-rbenv
+     - ansible-role-update
+     - ansible-role-xcode
+     - ansible-role-clt

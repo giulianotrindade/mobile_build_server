@@ -1,0 +1,29 @@
+---
+# Teste se CommandLineTools foi exportado anteriormente.
+- name: clt.dmg_existe?.
+  stat: path=/Users/{{ ansible_ssh_user }}/{{ clt_src }}
+  register: clt_dmg
+
+# Encaminhar CommandLineTools para o(s) alvo(s).
+- name: enviar_clt.
+  copy: src={{ clt_src }} dest=/Users/{{ ansible_ssh_user }}
+  when: clt_dmg.stat.exists == False
+
+# Montar Volume para o CommandLineTools.
+- name: monte_vol.
+  command: hdiutil attach {{ clt_src }}
+
+# Execute o instalador via linha de comando.
+- name: inslalar_clt.
+  command: installer -verbose -pkg "{{ clt_pkg }}" -target / chdir={{ volume_clt_path }}
+  become: yes
+  become_method: sudo
+
+## Quando finalizar, desmontar o dmg e deletar o download.
+# Ejetar o dmg.
+- name: Ejetar_dmg.
+  command: hdiutil detach /Volumes/Command\ Line\ Developer\ Tools
+
+# Deletar o dmg_baixado.
+- name: Delete_dmg.
+  shell: rm /Users/{{ ansible_ssh_user }}/{{ clt_src }}

@@ -1,0 +1,7 @@
+---
+#
+force_install: yes
+
+clt_src: CommandLineToolsforXcode8.3.2.dmg
+clt_pkg: Command Line Tools (macOS Sierra version 10.12).pkg
+volume_clt_path: '/Volumes/Command Line Developer Tools'

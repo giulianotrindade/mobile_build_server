@@ -1,0 +1,89 @@
+---
+# Checar se há incompatibilidade com RVM.
+# Verifique se_a_existência_do_rvm-rvm-não_é_compatível_com_rbenv
+- name: Verifique_rvm.
+  command: "whereis -b rvm"
+  register: rvm_status
+  failed_when: rvm_status.stdout.find("/") != -1
+
+# # Clonar rbenv do repo.
+# - name: Clone o repository para cada usuario.
+#   get_url::
+#     url: "https://github.com/rbenv/rbenv.git"
+#     dest: "{{ rbenv_users_home_path_prefix }}/{{ item.user }}/.rbenv"
+#     update: "yes"
+#     accept_hostkey: "yes"
+#   with_items: "{{ rbenv_users }}"
+
+# Encaminhar rbenv para o(s) alvo(s)..
+- name: Encaminhar_rbenv.
+  synchronize: src={{ rbenv_src }} dest={{ rbenv_users_home_path_prefix }}/{{ item.user }}
+  with_items:
+    - "{{ rbenv_users }}"
+
+# Criar link simbolico para /libexec/rbenv
+- name: Criar_link
+  command: bash -lc "cd {{ rbenv_users_home_path_prefix }}/{{ item.user }}/.rbenv/bin && ln -s ../libexec/rbenv rbenv"
+  with_items:
+    - "{{ rbenv_users }}"
+  ignore_errors: yes
+
+# Compile a extencao bash dinamica para acelerar o rbenv.
+- name: Configure.
+  command: "chdir={{ rbenv_users_home_path_prefix }}/{{ item.user }}/.rbenv src/configure"
+  with_items: "{{ rbenv_users }}"
+  when: use_rbenv_extension
+
+# Compile a extencao bash dinamica para acelerar o rbenv para cada usuário.
+- name: Compile_extencao_bash_dinamica.
+  command: "chdir={{ rbenv_users_home_path_prefix }}/{{ item.user }}/.rbenv make -C src"
+  with_items: "{{ rbenv_users }}"
+  when: use_rbenv_extension
+
+# Adicione o caminho do binario rbenv para o $PATH
+- name: Adicione_caminho.
+  lineinfile:
+    dest: "{{ rbenv_users_home_path_prefix }}/{{ item.user }}/{{ rbenv_profile_file }}"
+    line: "{{ rbenv_export_line }}"
+  with_items: "{{ rbenv_users }}"
+
+# #
+- lineinfile: dest=~/.bash_profile line='if which rbenv > /dev/null; then eval "$(rbenv init -)"; fi' state=present
+
+# # Clone o ruby-build.
+# - name: Clone_ruby-build_para_cada_usuário.
+#   get_url:
+#     url: "https://github.com/rbenv/ruby-build.git"
+#     dest: "{{ rbenv_users_home_path_prefix }}/{{ item.user }}/.rbenv/plugins/ruby-build"
+#     update: "yes"
+#     accept_hostkey: "yes"
+#   with_items: "{{ rbenv_users }}"
+#   when: install_ruby_build
+
+# Encaminhar ruby-build para o(s) alvo(s) se for requerido.
+- name: Encaminhar_ruby-build.
+  synchronize: src={{ rbuild_src }} dest={{ rbenv_users_home_path_prefix }}/{{ item.user }}/.rbenv/plugins
+  with_items:
+    - "{{ rbenv_users }}"
+  register: rbuild_present
+  when: install_ruby_build
+
+# Instalar ruby-build
+- name: Instalar_ruby-build
+  command: ./install.sh chdir={{ rbenv_users_home_path_prefix }}/{{ item.user }}/.rbenv/plugins/ruby-build
+  with_items:
+    - "{{ rbenv_users }}"
+  when: rbuild_present|success
+
+# # Certifique-se de que os arquivos tenham as permissões corretas.
+- name: Setar_permissions.
+  file:
+    path: "{{ rbenv_users_home_path_prefix }}/{{ item.user }}/.rbenv"
+    owner: "{{ item.user }}"
+    group: "{{ item.group }}"
+    recurse: "yes"
+  with_items: "{{ rbenv_users }}"
+
+# Load rbenv
+- name: Load_rbenv.
+  shell: source ~/.bash_profile

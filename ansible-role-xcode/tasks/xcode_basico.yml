@@ -1,0 +1,30 @@
+---
+# Teste se xcode foi exportado anteriormente.
+- name: xcode_existe?.
+  stat: path="/Users/{{ ansible_ssh_user }}/{{ xcode_dmg }}"
+  register: xcode_dl_path
+
+# Upload Xcode para o host.
+- name: upload_xcode.
+  copy:
+      src={{ xcode_dmg }}
+      dest=/Users/{{ ansible_ssh_user }}
+  when: xcode_dl_path.stat.exists == False
+
+# Montar o xcode.dmg com hdutil.
+- name: mount_xcode.
+  command: hdiutil attach /Users/{{ ansible_ssh_user }}/{{ xcode_dmg }}
+  args:
+      creates: /Volumes/Xcode/
+
+# Instalar Xcode.
+- name: install_xcode.
+  command: cp -r /Volumes/Xcode/Xcode.app /Applications/
+  args:
+      creates: /Applications/Xcode.app/
+      
+# Aceitar licença.
+- name: aceitar_licença.
+  command: /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -license accept
+  become: yes
+  become_method: sudo

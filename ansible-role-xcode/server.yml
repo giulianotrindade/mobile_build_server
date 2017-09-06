@@ -1,0 +1,5 @@
+- hosts: itau
+  roles:
+     - role: ansible-role-xcode_2_nick
+       xcode_version: 8
+       xcode_src: Xcode8.3.3.xip

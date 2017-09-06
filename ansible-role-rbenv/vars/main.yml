@@ -1,0 +1,5 @@
+---
+# ruby_install_gems_user: root
+# ruby_install_gems:
+#   - sass
+# ruby_gems_bin_path: $HOME/.gem/ruby/bin

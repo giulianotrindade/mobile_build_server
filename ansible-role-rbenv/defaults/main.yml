@@ -1,0 +1,48 @@
+---
+## Variaveis.
+## Local dos rbenv
+rbenv_src: .rbenv
+rbuild_src: ruby-build
+
+## A versap do Ruby a ser instalada
+# ruby_version: ''
+
+## Os usuarios
+rbenv_users:
+      - {
+        user: tiagoalmeida,
+        group: staff
+        }
+rbenv_users_home_path_prefix: "/Users"
+
+## Compilar a extensão bash dinâmica para acelerar o rbenv. Opcional.
+use_rbenv_extension: True
+
+## Configurações para adicionar rbenv ao caminho. Entre a variavel {{ profile_file }}
+## e a variavel {{ export_line }}
+## Configure esta função para trabalhar com bash, zsh, and fish.
+rbenv_profile_file: ".bash_profile"
+rbenv_export_line: 'export PATH="$HOME/.rbenv/bin:$PATH"'
+
+## Instalar ou não o Ruby-build como um plugin rbenv.
+## @see https://github.com/rbenv/ruby-build
+install_ruby_build: True
+
+ruby_path: ".rbenv/versions"
+# Whether this role should install Bundler.
+ruby_install_bundler: true
+
+# A list of Ruby gems to install.
+ruby_install_gems: []
+
+# The user account under which Ruby gems will be installed.
+ruby_install_gems_user: "{{ ansible_user }}"
+
+# If set to TRUE, ruby will be installed from source, using the version set with
+# the 'ruby_version' variable instead of using a package.
+# ruby_install_from_source: false
+ruby_src: ruby-2.3.0
+ruby_version: 2.3.0
+
+# Default should usually work, but this will be overridden on Ubuntu 14.04.
+ruby_rubygems_package_name: rubygems

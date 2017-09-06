@@ -1,0 +1,3 @@
+---
+# Execute o playbook para CommandLineTools
+- include: CommandLineTools_dmg.yml

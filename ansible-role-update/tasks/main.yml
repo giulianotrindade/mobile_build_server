@@ -1,0 +1,42 @@
+---
+# Qual a versao do SO?
+- name: versao_so.
+  command: sw_vers -productVersion
+  register: mac_ver
+
+# Print a versão presente.
+- debug: msg="A versão do MacOS Sierra é {{ mac_ver.stdout }}!!"
+
+# Pare a execução do Playbook caso ja esteja instalada.
+- fail:
+    msg: "A versão {{ macos_version }} do MacOS Sierra ja está instalada!!"
+  when: mac_ver.stdout == macos_version
+
+# Teste se .dmg foi exportado anteriormente.
+- name: macosupd10.12.6.dmg_existe?.
+  stat: path=/Users/{{ ansible_ssh_user }}/{{ macos_src }}
+  register: macosupd_dmg
+
+# Encaminhar o .dmg para o(s) alvo(s).
+- name: enviar_macosupd.
+  copy: src={{ macos_src }} dest=/Users/{{ ansible_ssh_user }}
+  when: macosupd_dmg.stat.exists == False
+
+# Montar Volume para o .DMG.
+- name: monte_vol.
+  command: hdiutil attach {{ macos_src }}
+
+# Execute o instalador via linha de comando.
+- name: instalar_atualizacao.
+  command: installer -verbose -pkg "{{ macos_pkg }}" -target / chdir={{ volume_osx_path }}
+  become: yes
+  become_method: sudo
+
+## Quando finalizar, desmontar o dmg e deletar o download.
+# Ejetar o dmg.
+- name: Ejetar_dmg.
+  command: hdiutil detach /Volumes/macOS\ Sierra\ Update
+
+# Deletar o dmg_baixado.
+- name: Delete_dmg.
+  shell: rm /Users/{{ ansible_ssh_user }}/{{ macos_src }}

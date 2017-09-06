@@ -1,0 +1,5 @@
+---
+# Inclua abaixo os playbooks para instalação do rbenv e ruby.
+- include: rbenv.yml
+
+- include: ruby.yml

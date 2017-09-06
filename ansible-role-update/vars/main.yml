@@ -1,0 +1,7 @@
+---
+
+# Vars do MacOS Sierra (10.12.6)
+macos_path: /Library/Developer/
+macos_src: macosupd10.12.6.dmg
+macos_pkg: macOSUpd10.12.6.pkg
+volume_osx_path: '/Volumes/macOS Sierra Update'

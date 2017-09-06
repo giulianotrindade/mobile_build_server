@@ -1,0 +1,63 @@
+---
+# Remova a instalação do 'Command Line Tools'.
+- name: remove_clt.
+  command: rm -rf {{ clt_path }}
+  when: force_install
+  become: yes
+  become_method: sudo
+
+# Verifique se o path do Command Line Tools path está presente.
+- name: check_clt_path.
+  stat:
+    path: '{{ clt_path }}'
+  register: clt
+
+# O compilador C ++ é utilizável?
+- name: compiler.
+  command: g++ --version
+  register: compiler
+  ignore_errors: true
+  changed_when: false
+
+- name: Print version.
+  debug:
+    msg: "Compilador GCC nao esta instalado... seguindo com a instalacao do CommandLineTools!!"
+  when: compiler|failed
+
+# Check o 'Command Line Tools' package metadata.
+- name: clt_package.
+  command: pkgutil --pkg-info=com.apple.pkg.CLTools_Executables
+  register: pkg_info
+  ignore_errors: true
+  changed_when: false
+
+# Prepare para instalar o 'Command Line Tools'
+- name: prepare_clt.
+  file:
+    path: /tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress
+    state: touch
+  when: pkg_info.rc != 0 or compiler.rc != 0 or not clt.stat.exists
+
+# Verifique se há atualizaões pendentes para o 'Command Line Tools'.
+- name: atualizacao?.
+  shell: >
+    softwareupdate -l |
+    grep -B 1 -E 'Command Line Tools' |
+    awk -F'*' '/^ +\*/ {print $2}' |
+    sed 's/^ *//' |
+    head -n1
+  register: su_list
+  when: pkg_info.rc != 0 or compiler.rc != 0 or not clt.stat.exists
+  changed_when: false
+  failed_when: su_list.rc != 0 or su_list.stdout|length == 0
+
+# Instale o CommandLineTools.
+- name: instale_clt.
+  command: softwareupdate --install '{{ su_list.stdout }}'
+  register: log
+  when: pkg_info.rc != 0 or compiler.rc != 0 or not clt.stat.exists
+
+- debug: msg="{{ log.stdout }}"
+
+  notify:
+    - Cleanup
